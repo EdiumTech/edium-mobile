@@ -23,24 +23,51 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Detect changed surface
+        uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            app:
+              - 'edium/**'
+            landing:
+              - 'landing/**'
+
       - name: Setup Flutter
+        if: steps.changes.outputs.app == 'true'
         uses: subosito/flutter-action@v2
         with:
           channel: stable
           cache: true
 
       - name: Install dependencies
+        if: steps.changes.outputs.app == 'true'
         run: flutter pub get
 
       - name: Analyze
+        if: steps.changes.outputs.app == 'true'
         run: flutter analyze --fatal-infos
 
       - name: Test
+        if: steps.changes.outputs.app == 'true'
         run: flutter test --coverage
 
       - name: Upload coverage
         uses: codecov/codecov-action@v5
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && steps.changes.outputs.app == 'true'
         with:
           files: edium/coverage/lcov.info
           fail_ci_if_error: false
+
+      - name: Setup Node
+        if: steps.changes.outputs.landing == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: landing/package-lock.json
+
+      - name: Build landing
+        if: steps.changes.outputs.landing == 'true'
+        working-directory: landing
+        run: npm ci && npm run build
