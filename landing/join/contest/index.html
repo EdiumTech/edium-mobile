@@ -23,8 +23,9 @@
       <section id="intro-view" class="state-card" hidden>
         <span id="intro-track" class="eyebrow">Закрытый контест</span>
         <h1>Небольшая смена в Edium</h1>
-        <p>Три рабочие ситуации по твоему направлению. Где-то продукт капризничает, где-то AI слишком уверен в себе. Помоги им договориться — с помощью JavaScript.</p>
-        <p>Пиши только код: функцию <code>solve(input)</code> на JavaScript (ES2022). Кнопка проверки запускает все тесты задачи и показывает, сколько прошло. Можно исправлять решение и проверять снова.</p>
+        <p>Три рабочие ситуации по твоему направлению. Где-то продукт капризничает, где-то AI слишком уверен в себе. Помоги им договориться — с помощью кода.</p>
+        <p id="intro-format"></p>
+        <p>Кнопка проверки запускает все тесты задачи и показывает, сколько прошло. Можно исправлять решение и проверять снова.</p>
         <dl class="facts"><div><dt>Задач</dt><dd id="intro-count">3</dd></div><div><dt>Время</dt><dd id="intro-duration">90 минут</dd></div><div><dt>Начать до</dt><dd id="intro-start-before">—</dd></div></dl>
         <div class="notice">После старта таймер идёт непрерывно, а код сохраняется автоматически. Дополнительные пояснения и файлы не нужны.</div>
         <button id="start-button" type="button">Начать контест</button>
@@ -35,9 +36,10 @@
         <article id="task-panel" class="task-panel">
           <div class="task-copy"><span id="task-index" class="task-index"></span><h2 id="task-title"></h2><p id="task-input"></p><section><h3>Условия задачи</h3><p id="task-description"></p></section><section><h3>Формат ответа</h3><p id="task-output"></p></section><section><h3>Примеры</h3><div id="task-examples"></div></section></div>
           <div class="solution">
-            <label for="source">Решение · JavaScript</label>
+            <div id="language-picker" hidden><label for="solution-language">Язык этой задачи</label><select id="solution-language" aria-describedby="language-help"></select><small id="language-help">В этой задаче можно выбрать один из двух языков.</small></div>
+            <label id="source-label" for="source">Решение</label>
             <textarea id="source" maxlength="65536" spellcheck="false" autocomplete="off" autocapitalize="off" aria-describedby="source-help"></textarea>
-            <small id="source-help">Объяви <code>function solve(input)</code> и верни JSON-совместимое значение. Без TypeScript, импортов и внешних библиотек. Tab добавляет отступ, Shift+Tab выводит фокус из редактора.</small>
+            <small id="source-help"></small>
             <div class="solution-actions"><button id="run-button" class="secondary-button" type="button">Проверить все тесты</button><span id="task-save-state" role="status"></span></div>
             <p id="test-summary" class="test-summary" role="status">Запусти проверку, чтобы увидеть результат всех тестов.</p>
             <progress id="test-progress" aria-label="Пройдено тестов" max="1" value="0" hidden></progress>

@@ -27,14 +27,21 @@ function deferred() {
   return { promise, resolve }
 }
 
-async function page() {
+async function page({ mobile = false } = {}) {
   const elements = new Map()
   const element = id => {
     if (!elements.has(id)) elements.set(id, new Element())
     return elements.get(id)
   }
   const tasks = ['one', 'two', 'three'].map(id => ({ id, title: id, summary: '', description: '', signature: '', starterCode: 'function solve(input) { return null }', publicExamples: [] }))
+  if (mobile) tasks.forEach((task, index) => {
+    const kotlin = { label: 'Kotlin', starterCode: 'fun solve(input: Map<String, Any?>) = emptyMap<String, Any?>()', signature: 'fun solve(input: Map<String, Any?>): Map<String, Any?>' }
+    const swift = { label: 'Swift', starterCode: 'func solve(_ input: [String: Any]) -> [String: Any] { [:] }', signature: 'func solve(_ input: [String: Any]) -> [String: Any]' }
+    task.languages = index === 0 ? { kotlin } : index === 1 ? { swift } : { kotlin, swift }
+    task.defaultLanguage = index === 1 ? 'swift' : 'kotlin'
+  })
   let state = { id: 'demo', state: 'opened', revision: 1, tasks, answers: {}, trackLabel: 'Дизайн', durationMinutes: 90, startBefore: new Date(Date.now() + 86400000).toISOString() }
+  if (mobile) state = { ...state, trackLabel: 'Мобильная разработка', languages: ['kotlin', 'swift'] }
   const requests = []
   const delays = new Map()
   const responses = new Map()
@@ -58,7 +65,7 @@ async function page() {
       if (delays.has(route)) await delays.get(route).promise
       if (responses.has(route)) return { ok: true, json: async () => responses.get(route) }
       if (route.endsWith('/start')) state = { ...state, state: 'started', deadlineAt: new Date(Date.now() + 5400000).toISOString() }
-      if (route.includes('/answers/')) state = { ...state, revision: state.revision + 1, answers: { ...state.answers, [route.split('/').pop()]: { source: body.source } } }
+      if (route.includes('/answers/')) state = { ...state, revision: state.revision + 1, answers: { ...state.answers, [route.split('/').pop()]: { source: body.source, language: body.language } } }
       if (route.endsWith('/submit')) state = { ...state, state: 'submitted' }
       const response = { ...state }
       if (route.includes('/answers/') || route.endsWith('/submit') || route.endsWith('/start')) delete response.tasks
@@ -85,7 +92,7 @@ test('code-only save and full test counts work with partial contest responses', 
   ] } })
   await app.element('#run-button').fire('click')
   const save = app.requests.find(request => request.route.includes('/answers/'))
-  assert.deepEqual(Object.keys(save.body).sort(), ['revision', 'source'])
+  assert.deepEqual(Object.keys(save.body).sort(), ['language', 'revision', 'source'])
   assert.equal(save.body.source, source)
   assert.match(app.element('#test-summary').textContent, /Пройдено 1 из 3 тестов/)
   assert.equal(app.element('#test-results').children.length, 3)
@@ -93,6 +100,33 @@ test('code-only save and full test counts work with partial contest responses', 
   await app.element('#submit-button').fire('click')
   assert.equal(app.element('#finished-view').hidden, false)
   assert.equal(app.element('#finished-answers').children.length, 3)
+})
+
+test('mobile requires Kotlin and Swift tasks and preserves drafts when the optional language changes', async () => {
+  const app = await page({ mobile: true })
+  assert.match(app.element('#intro-format').textContent, /обязательно на Kotlin, одна — на Swift/)
+  assert.equal(app.element('#source-label').textContent, 'Решение · Kotlin')
+  assert.equal(app.element('#language-picker').hidden, true)
+  await app.element('#task-tabs').children[1].fire('click')
+  assert.equal(app.element('#source-label').textContent, 'Решение · Swift')
+  assert.equal(app.element('#language-picker').hidden, true)
+  await app.element('#task-tabs').children[2].fire('click')
+  assert.equal(app.element('#language-picker').hidden, false)
+  const kotlinDraft = 'fun solve(input: Map<String, Any?>) = input'
+  app.element('#source').value = kotlinDraft
+  app.element('#source').fire('input')
+  app.element('#solution-language').value = 'swift'
+  await app.element('#solution-language').fire('change')
+  const firstSave = app.requests.find(request => request.route.includes('/answers/three'))
+  assert.equal(firstSave.body.language, 'kotlin')
+  assert.equal(firstSave.body.source, kotlinDraft)
+  assert.equal(app.element('#source-label').textContent, 'Решение · Swift')
+  app.element('#source').value = 'func solve(_ input: [String: Any]) -> [String: Any] { input }'
+  app.element('#source').fire('input')
+  app.element('#solution-language').value = 'kotlin'
+  await app.element('#solution-language').fire('change')
+  assert.equal(app.element('#source').value, kotlinDraft)
+  assert.equal(app.element('#source-label').textContent, 'Решение · Kotlin')
 })
 
 test('test report stays with its task and becomes stale after source edits', async () => {
@@ -110,6 +144,29 @@ test('test report stays with its task and becomes stale after source edits', asy
   app.element('#source').value += '\n// changed'
   app.element('#source').fire('input')
   assert.match(app.element('#test-summary').textContent, /Код изменился/)
+})
+
+test('an in-flight mobile report stays with the submitted language', async () => {
+  const app = await page({ mobile: true })
+  await app.element('#task-tabs').children[2].fire('click')
+  app.element('#source').value = 'fun solve(input: Map<String, Any?>) = input'
+  app.element('#source').fire('input')
+  const pending = deferred()
+  app.delays.set('/v1/contest/run', pending)
+  app.responses.set('/v1/contest/run', { result: { passed: 7, total: 7, tests: Array.from({ length: 7 }, (_, index) => ({ name: String(index), passed: true })) } })
+  const running = app.element('#run-button').fire('click')
+  app.element('#solution-language').value = 'swift'
+  await app.element('#solution-language').fire('change')
+  pending.resolve()
+  await running
+  const sent = app.requests.find(request => request.route.endsWith('/run'))
+  assert.equal(sent.body.language, 'kotlin')
+  assert.match(sent.body.source, /^fun /)
+  assert.equal(app.element('#source-label').textContent, 'Решение · Swift')
+  assert.match(app.element('#test-summary').textContent, /Запусти проверку/)
+  app.element('#solution-language').value = 'kotlin'
+  await app.element('#solution-language').fire('change')
+  assert.match(app.element('#test-summary').textContent, /Пройдено 7 из 7/)
 })
 
 test('switch and submit lock editing until the pending draft is saved', async () => {

@@ -113,23 +113,17 @@
             </legend>
 
             <div class="field">
-              <label for="direction">Интересующее направление <span class="optional">необязательно</span></label>
-              <select id="direction" name="direction">
+              <label for="direction">Интересующее направление <span aria-hidden="true">*</span></label>
+              <select id="direction" name="direction" required aria-describedby="direction-help">
                 <option value="">Выбери направление</option>
-                <option>Разработка</option>
+                <option>Бэкенд</option>
+                <option>Фронтенд</option>
+                <option>Мобильная разработка</option>
                 <option>AI/ML</option>
-                <option>Электроника</option>
-                <option>Дизайн</option>
-                <option>Продукт</option>
-                <option>Маркетинг</option>
-                <option value="other">Другое</option>
+                <option>Системная разработка (EdiumBoost)</option>
               </select>
-            </div>
-
-            <div class="field" id="other-direction-field" hidden>
-              <label for="other-direction">Своё направление</label>
-              <input id="other-direction" name="otherDirection" type="text" maxlength="120" placeholder="Например, образовательная методология" />
-              <p class="field-error" id="other-direction-error"></p>
+              <p class="field-hint" id="direction-help">EdiumBoost — ПО устройства, интерфейсы и интеграции с железом. В мобильном контесте обязательны оба языка: Kotlin и Swift.</p>
+              <p class="field-error" id="direction-error"></p>
             </div>
 
             <div class="field">

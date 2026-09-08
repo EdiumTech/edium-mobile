@@ -170,8 +170,9 @@ function renderContest(value) {
     const answer = value.answers?.[task.id]
     const section = document.createElement('section'); section.className = 'contest-answer'
     const title = document.createElement('h4'); title.textContent = task.title
+    const language = document.createElement('p'); language.textContent = { javascript: 'JavaScript', kotlin: 'Kotlin', swift: 'Swift' }[answer?.language || task.defaultLanguage || 'javascript']
     const source = document.createElement('pre'); source.textContent = answer?.source || 'Ответ не добавлен'
-    section.append(title, source)
+    section.append(title, language, source)
     if (answer?.explanation) { const explanation = document.createElement('p'); explanation.textContent = answer.explanation; section.append(explanation) }
     if (answer?.url) { const link = document.createElement('a'); link.href = answer.url; link.target = '_blank'; link.rel = 'noopener'; link.textContent = answer.url; section.append(link) }
     return section

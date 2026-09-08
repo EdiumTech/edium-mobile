@@ -8,6 +8,7 @@ const views = ['loading-view', 'error-view', 'intro-view', 'workspace', 'finishe
 const $ = selector => document.querySelector(selector)
 let contest = null
 let activeTask = 0
+let activeLanguage = 'javascript'
 let clockOffset = 0
 let saveTimer = null
 let saveQueue = Promise.resolve()
@@ -17,6 +18,12 @@ let lastAnnouncedMinute = null
 let changingTask = false
 const announcedWarnings = new Set()
 const taskResults = new Map()
+const languageDrafts = new Map()
+const languageLabels = { javascript: 'JavaScript', kotlin: 'Kotlin', swift: 'Swift' }
+function languagesFor(task) {
+  return task.languages || { javascript: { label: 'JavaScript', starterCode: task.starterCode, signature: task.signature } }
+}
+function resultKey(task, language = activeLanguage) { return `${task.id}:${language}` }
 
 function show(id) { for (const view of views) $(`#${view}`).hidden = view !== id }
 function formatDate(value) { return new Intl.DateTimeFormat('ru-RU', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value)) }
@@ -54,7 +61,8 @@ function finishView(state) {
   $('#finished-answers').replaceChildren(...(contest.tasks || []).map(task => {
     const row = document.createElement('div'); row.className = 'answer-summary'
     const title = document.createElement('strong'); title.textContent = task.title
-    const value = document.createElement('code'); value.textContent = contest.answers?.[task.id]?.source ? 'Ответ сохранён' : 'Ответ не добавлен'
+    const answer = contest.answers?.[task.id]
+    const value = document.createElement('code'); value.textContent = answer?.source ? `Ответ сохранён · ${languageLabels[answer.language || 'javascript']}` : 'Ответ не добавлен'
     row.append(title, value); return row
   }))
   show('finished-view')
@@ -81,11 +89,11 @@ function updateTimer() {
   if (left <= 0) refreshContest()
 }
 
-function answerFor(task) { return contest.answers?.[task.id] || { source: task.starterCode || '' } }
+function answerFor(task) { return contest.answers?.[task.id] || { language: task.defaultLanguage || 'javascript' } }
 
 function renderTests() {
   const task = contest.tasks[activeTask]
-  const report = taskResults.get(task.id)
+  const report = taskResults.get(resultKey(task))
   const summary = $('#test-summary')
   const progress = $('#test-progress')
   const results = $('#test-results')
@@ -97,7 +105,7 @@ function renderTests() {
     return
   }
   if (report.pending) {
-    summary.textContent = 'Проверяем все тесты этой задачи…'
+    summary.textContent = activeLanguage === 'javascript' ? 'Проверяем все тесты этой задачи…' : 'Компилируем решение и проверяем все тесты. Это может занять немного времени…'
     return
   }
   if (report.error) {
@@ -123,20 +131,40 @@ function renderTests() {
 function renderTask() {
   const task = contest.tasks[activeTask]
   const answer = answerFor(task)
+  const languages = languagesFor(task)
+  activeLanguage = answer.language || task.defaultLanguage || 'javascript'
   $('#task-index').textContent = `Задача ${activeTask + 1} из ${contest.tasks.length}`
   $('#task-title').textContent = task.title
   $('#task-description').textContent = task.description
   $('#task-input').textContent = task.summary
-  $('#task-output').textContent = task.signature
+  $('#language-picker').hidden = Object.keys(languages).length < 2
+  $('#solution-language').replaceChildren(...Object.entries(languages).map(([language, config]) => {
+    const option = document.createElement('option'); option.value = language; option.textContent = config.label || languageLabels[language]; return option
+  }))
   $('#task-examples').replaceChildren(...task.publicExamples.map(example => {
     const box = document.createElement('div'); box.className = 'example'
     const code = document.createElement('code'); code.textContent = `Вход: ${JSON.stringify(example.input, null, 2)}\nРезультат: ${JSON.stringify(example.expected, null, 2)}`
     box.append(code); return box
   }))
-  $('#source').value = answer.source ?? task.starterCode ?? ''
+  $('#source').value = answer.source ?? languages[activeLanguage]?.starterCode ?? ''
+  renderLanguage()
   $('#task-save-state').textContent = contest.answers?.[task.id] ? 'Сохранено' : ''
   renderTests()
   document.querySelectorAll('#task-tabs button').forEach((button, index) => button.setAttribute('aria-current', String(index === activeTask)))
+}
+
+function renderLanguage() {
+  const task = contest.tasks[activeTask]
+  const config = languagesFor(task)[activeLanguage]
+  $('#solution-language').value = activeLanguage
+  $('#source-label').textContent = `Решение · ${config.label || languageLabels[activeLanguage]}`
+  $('#task-output').textContent = config.signature
+  const hints = {
+    javascript: 'Объяви function solve(input) и верни JSON-совместимое значение. Без TypeScript и внешних библиотек.',
+    kotlin: 'Объяви fun solve(input: Map<String, Any?>): Map<String, Any?>. Вход и результат — JSON-объекты. Доступна стандартная библиотека Kotlin; Android API и внешние зависимости не нужны.',
+    swift: 'Объяви func solve(_ input: [String: Any]) -> [String: Any]. Вход и результат — JSON-объекты. Доступны стандартная библиотека Swift и Foundation; UIKit и внешние зависимости не нужны.',
+  }
+  $('#source-help').textContent = `${hints[activeLanguage]} Tab добавляет отступ, Shift+Tab выводит фокус из редактора.`
 }
 
 function renderWorkspace() {
@@ -164,8 +192,12 @@ function renderContest(value) {
   contest = { ...contest, ...value }
   syncClock(contest.serverNow)
   const track = contest.trackLabel || contest.direction || 'Продуктовые задачи'
+  const supported = contest.languages || ['javascript']
   $('#intro-track').textContent = `Edium · ${track}`
-  $('#workspace-track').textContent = `${track} · JavaScript`
+  $('#workspace-track').textContent = `${track} · ${supported.map(language => languageLabels[language]).join(' + ')}`
+  $('#intro-format').textContent = supported.includes('kotlin') && supported.includes('swift')
+    ? 'Одна задача обязательно на Kotlin, одна — на Swift. Для третьей выбери любой из этих двух языков. Ответы — только код.'
+    : 'Пиши только код: функцию solve(input) на JavaScript (ES2022).'
   if (['submitted', 'expired', 'revoked'].includes(contest.state)) return finishView(contest.state)
   if (contest.state === 'started') return renderWorkspace()
   $('#intro-count').textContent = String(contest.tasks.length)
@@ -176,7 +208,7 @@ function renderContest(value) {
 }
 
 function currentPayload() {
-  return { source: $('#source').value, revision: contest.revision }
+  return { source: $('#source').value, language: activeLanguage, revision: contest.revision }
 }
 
 function queueSave() {
@@ -199,7 +231,7 @@ function saveCurrent() {
       contest.revision = result.contest.revision
       contest.answers = result.contest.answers
       lastSaveError = null
-      $('#task-save-state').textContent = $('#source').value === draft.source && !saveTimer ? 'Сохранено' : 'Есть несохранённые изменения'
+      $('#task-save-state').textContent = $('#source').value === draft.source && activeLanguage === draft.language && !saveTimer ? 'Сохранено' : 'Есть несохранённые изменения'
     } catch (error) {
       lastSaveError = error
       $('#task-save-state').textContent = error.code === 'revision_conflict' ? 'Открыта более новая версия в другой вкладке' : error.message
@@ -241,6 +273,26 @@ $('#source').addEventListener('input', () => {
   queueSave()
 })
 
+$('#solution-language').addEventListener('change', async () => {
+  const task = contest.tasks[activeTask]
+  const nextLanguage = $('#solution-language').value
+  $('#solution-language').value = activeLanguage
+  if (changingTask || $('#submit-button').disabled || nextLanguage === activeLanguage || !languagesFor(task)[nextLanguage]) return
+  changingTask = true
+  $('#source').readOnly = true
+  $('#solution-language').disabled = true
+  try {
+    await flushSave()
+    languageDrafts.set(resultKey(task), $('#source').value)
+    activeLanguage = nextLanguage
+    $('#source').value = languageDrafts.get(resultKey(task)) ?? languagesFor(task)[activeLanguage].starterCode ?? ''
+    renderLanguage()
+    renderTests()
+    queueSave()
+  } catch (error) { $('#workspace-note').textContent = error.message }
+  finally { changingTask = false; $('#source').readOnly = false; $('#solution-language').disabled = false }
+})
+
 $('#source').addEventListener('keydown', event => {
   if (event.key !== 'Tab' || event.shiftKey || event.currentTarget.readOnly) return
   event.preventDefault()
@@ -255,16 +307,18 @@ $('#run-button').addEventListener('click', async () => {
   const button = $('#run-button'); button.disabled = true; button.textContent = 'Проверяем…'
   const task = contest.tasks[activeTask]
   const source = $('#source').value
-  taskResults.set(task.id, { source, pending: true })
+  const language = activeLanguage
+  const key = resultKey(task, language)
+  taskResults.set(key, { source, pending: true })
   renderTests()
   try {
     await flushSave()
-    const { result } = await api('/v1/contest/run', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ taskId: task.id, source }) })
+    const { result } = await api('/v1/contest/run', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ taskId: task.id, source, language }) })
     // Derive counters from case results while an older API version is rolling out.
     const total = Number.isInteger(result.total) ? result.total : result.tests.length
     const passed = Number.isInteger(result.passed) ? result.passed : result.tests.filter(test => test.passed).length
-    taskResults.set(task.id, { source, result: { ...result, total, passed } })
-  } catch (error) { taskResults.set(task.id, { source, error: error.message }) }
+    taskResults.set(key, { source, result: { ...result, total, passed } })
+  } catch (error) { taskResults.set(key, { source, error: error.message }) }
   finally {
     renderTests()
     button.disabled = false

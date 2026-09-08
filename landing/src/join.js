@@ -14,7 +14,6 @@ const submitLabel = submitButton.querySelector('.submit-label')
 const submitLoading = submitButton.querySelector('.submit-loading')
 const submitProgress = document.querySelector('#submit-progress')
 const direction = document.querySelector('#direction')
-const otherDirectionField = document.querySelector('#other-direction-field')
 const motivation = document.querySelector('#motivation')
 const motivationCounter = document.querySelector('#motivation-counter')
 const resumeInput = document.querySelector('#resume')
@@ -38,7 +37,6 @@ const fields = {
   phone: document.querySelector('#phone'),
   email: document.querySelector('#email'),
   direction,
-  otherDirection: document.querySelector('#other-direction'),
   motivation,
   portfolioUrl: document.querySelector('#portfolio-url'),
   resume: resumeInput,
@@ -51,7 +49,7 @@ const errorIds = {
   telegram: 'telegram-error',
   phone: 'phone-error',
   email: 'email-error',
-  otherDirection: 'other-direction-error',
+  direction: 'direction-error',
   motivation: 'motivation-error',
   portfolioUrl: 'portfolio-url-error',
   resume: 'resume-error',
@@ -82,7 +80,6 @@ function normalizePhone(value) {
 }
 
 function normalizedDirection() {
-  if (direction.value === 'other') return fields.otherDirection.value.trim()
   return direction.value
 }
 
@@ -117,8 +114,7 @@ function validate() {
   if (!normalizeTelegram(fields.telegram.value)) errors.telegram = 'Укажи корректный @username или ссылку t.me.'
   if (!normalizePhone(fields.phone.value)) errors.phone = 'Начни с + и укажи код страны и номер.'
   if (email && !fields.email.validity.valid) errors.email = 'Проверь адрес электронной почты.'
-  if (direction.value === 'other' && !normalizedDirection()) errors.otherDirection = 'Напиши своё направление.'
-  if (normalizedDirection().length > 120) errors.otherDirection = 'Направление должно быть короче 120 символов.'
+  if (!normalizedDirection()) errors.direction = 'Выбери направление.'
   if (motivationText.length < 40) errors.motivation = 'Расскажи чуть подробнее — минимум 40 символов.'
   if (motivationText.length > 4000) errors.motivation = 'Сократи письмо до 4000 символов.'
   if (portfolioUrl && !validWebUrl(portfolioUrl)) errors.portfolioUrl = 'Укажи полную ссылку, начинающуюся с https://.'
@@ -293,8 +289,7 @@ async function submitApplication(uploadId) {
 }
 
 direction.addEventListener('change', () => {
-  otherDirectionField.hidden = direction.value !== 'other'
-  if (!otherDirectionField.hidden) fields.otherDirection.focus()
+  if (direction.value) clearFieldError('direction')
 })
 
 motivation.addEventListener('input', () => {
