@@ -1,0 +1,32 @@
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+}
+
+@media (min-width: 841px) {
+  #workspace {
+    display: grid;
+    grid-template-columns: 210px minmax(0, 1fr);
+    gap: 0 14px;
+  }
+
+  .workspace-head,
+  .submit-bar {
+    grid-column: 1 / -1;
+  }
+
+  .task-tabs {
+    flex-direction: column;
+    align-self: start;
+    overflow: visible;
+  }
+
+  .task-tabs button {
+    width: 100%;
+    text-align: left;
+    white-space: normal;
+  }
+}

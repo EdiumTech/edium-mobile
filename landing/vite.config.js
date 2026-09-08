@@ -2,7 +2,7 @@ import { defineConfig } from 'vite'
 import tailwindcss from '@tailwindcss/vite'
 import { resolve } from 'node:path'
 
-const directoryRoutes = new Set(['/join', '/join/admin'])
+const directoryRoutes = new Set(['/join', '/join/admin', '/join/contest'])
 
 function redirectDirectoryRoutes() {
   const configure = server => {
@@ -34,6 +34,7 @@ export default defineConfig({
         main: resolve(__dirname, 'index.html'),
         join: resolve(__dirname, 'join/index.html'),
         joinAdmin: resolve(__dirname, 'join/admin/index.html'),
+        joinContest: resolve(__dirname, 'join/contest/index.html'),
       },
     },
   },

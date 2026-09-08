@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex,nofollow,noarchive" />
+    <meta name="referrer" content="no-referrer" />
+    <title>Контест — Edium</title>
+    <link rel="icon" href="/logo.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap" rel="stylesheet" />
+    <script type="module" src="/src/join-contest.js"></script>
+  </head>
+  <body>
+    <header>
+      <a class="brand" href="/" aria-label="Edium"><img src="/logo.png" alt="" /><span>Edium</span></a>
+      <div class="header-state"><span id="save-state" role="status">Закрытый контест</span><strong id="timer" aria-hidden="true">—</strong><span id="timer-live" class="sr-only" aria-live="polite"></span></div>
+    </header>
+    <main>
+      <section id="loading-view" class="state-card"><span class="eyebrow">Edium · команда</span><h1>Открываем контест…</h1></section>
+      <section id="error-view" class="state-card" hidden><span class="eyebrow">Доступ закрыт</span><h1 id="error-title">Ссылка недействительна</h1><p id="error-message"></p></section>
+      <section id="intro-view" class="state-card" hidden>
+        <span class="eyebrow">Закрытый контест</span>
+        <h1>Три задачи о продукте Edium</h1>
+        <p>Решения — на JavaScript (ES2022). После старта пойдёт непрерывный таймер; поставить его на паузу нельзя. Ответы сохраняются автоматически на сервере.</p>
+        <dl class="facts"><div><dt>Задач</dt><dd id="intro-count">3</dd></div><div><dt>Время</dt><dd id="intro-duration">90 минут</dd></div><div><dt>Начать до</dt><dd id="intro-start-before">—</dd></div></dl>
+        <div class="notice">Не вставляй секреты и персональные данные в код. Проверка запускается в изолированной песочнице без сети.</div>
+        <button id="start-button" type="button">Начать контест</button>
+      </section>
+      <section id="workspace" hidden>
+        <div class="workspace-head"><div><span class="eyebrow">JavaScript · ES2022</span><h1>Контест</h1></div><p id="workspace-note" aria-live="polite">Все изменения сохраняются автоматически.</p></div>
+        <nav id="task-tabs" class="task-tabs" aria-label="Задачи"></nav>
+        <article id="task-panel" class="task-panel">
+          <div class="task-copy"><span id="task-index" class="task-index"></span><h2 id="task-title"></h2><p id="task-description"></p><section><h3>Входные данные</h3><p id="task-input"></p></section><section><h3>Результат</h3><p id="task-output"></p></section><section><h3>Примеры</h3><div id="task-examples"></div></section></div>
+          <div class="solution">
+            <label for="source">Решение</label>
+            <textarea id="source" spellcheck="false" autocomplete="off" aria-describedby="source-help"></textarea>
+            <small id="source-help">Объяви функцию <code>solve(input)</code>. Она должна вернуть JSON-совместимое значение.</small>
+            <label for="explanation">Коротко объясни решение</label>
+            <textarea id="explanation" class="explanation" maxlength="2400"></textarea>
+            <small id="explanation-help"></small>
+            <label for="solution-url">Ссылка на дополнительный материал <span>(необязательно)</span></label>
+            <input id="solution-url" type="url" inputmode="url" placeholder="https://…" />
+            <div class="solution-actions"><button id="run-button" class="secondary-button" type="button">Запустить тесты</button><span id="task-save-state" role="status"></span></div>
+            <div id="test-results" class="test-results" aria-live="polite"></div>
+          </div>
+        </article>
+        <div class="submit-bar"><p>Отправить можно один раз. После отправки изменить решения нельзя.</p><button id="submit-button" type="button">Отправить решения</button></div>
+      </section>
+      <section id="finished-view" class="state-card" hidden><span class="eyebrow">Контест завершён</span><h1 id="finished-title">Решения отправлены</h1><p id="finished-message">Спасибо! Команда Edium рассмотрит решения и свяжется с тобой.</p><div id="finished-answers"></div></section>
+    </main>
+  </body>
+</html>

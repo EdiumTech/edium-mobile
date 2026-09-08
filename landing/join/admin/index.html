@@ -47,12 +47,16 @@
             <option value="accepted">Принята</option>
             <option value="rejected">Отказ</option>
           </select>
+          <label for="contest-filter">Контест</label>
+          <select id="contest-filter">
+            <option value="">Все</option><option value="none">Не назначен</option><option value="invited">Приглашён</option><option value="opened">Открыт</option><option value="started">Идёт</option><option value="submitted">Отправлен</option><option value="expired">Истёк</option><option value="revoked">Отозван</option>
+          </select>
           <button id="refresh-button" class="secondary-button" type="button">Обновить</button>
         </div>
         <p id="list-status" class="list-status" role="status"></p>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Кандидат</th><th>Направление</th><th>Дата</th><th>Статус</th><th><span class="sr-only">Открыть</span></th></tr></thead>
+            <thead><tr><th>Кандидат</th><th>Направление</th><th>Дата</th><th>Статус</th><th>Контест</th><th><span class="sr-only">Открыть</span></th></tr></thead>
             <tbody id="applications-list"></tbody>
           </table>
         </div>
@@ -65,6 +69,20 @@
           <button id="close-dialog" class="icon-button" type="button" aria-label="Закрыть">×</button>
         </div>
         <div id="candidate-details" class="details"></div>
+        <section id="contest-panel" class="contest-panel" aria-labelledby="contest-heading">
+          <div class="contest-head"><div><span class="eyebrow">Практическая часть</span><h3 id="contest-heading">Контест</h3></div><span id="contest-state" class="status-pill"></span></div>
+          <div id="contest-empty">
+            <p>Создай персональную ссылку на JavaScript-контест. Email отправится через существующий Herald; если email не указан, ссылку можно скопировать вручную.</p>
+            <div class="inline-form"><label>Время, минут<input id="contest-duration" type="number" min="15" max="240" value="90" /></label><label>Начать в течение, дней<input id="contest-days" type="number" min="1" max="30" value="7" /></label><button id="create-contest" type="button">Создать приглашение</button></div>
+          </div>
+          <div id="contest-details" hidden>
+            <div id="contest-meta" class="contest-meta"></div>
+            <div class="contest-actions"><button id="copy-contest-link" class="secondary-button" type="button">Копировать ссылку</button><button id="resend-contest" class="secondary-button" type="button">Отправить ещё раз</button><button id="extend-contest" class="secondary-button" type="button">Продлить на 60 минут</button><button id="revoke-contest" class="danger-button" type="button">Отозвать</button></div>
+            <div id="contest-answers" class="contest-answers"></div>
+            <div class="review"><h4>Оценка команды</h4><div id="review-tasks"></div><label for="review-conclusion">Общий вывод</label><textarea id="review-conclusion" maxlength="6000"></textarea><button id="save-review" type="button">Сохранить оценку</button></div>
+          </div>
+          <p id="contest-status" class="error" role="status"></p>
+        </section>
         <div class="dialog-actions">
           <label for="candidate-status">Статус</label>
           <select id="candidate-status">
