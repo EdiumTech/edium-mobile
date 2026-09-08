@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex,nofollow,noarchive" />
+    <title>Заявки в команду — Edium</title>
+    <link rel="icon" href="/logo.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <script type="module" src="/src/join-admin.js"></script>
+  </head>
+  <body>
+    <header>
+      <a href="/" class="brand"><img src="/logo.png" alt="" /><span>Edium</span></a>
+      <span class="secure-label">Закрытый раздел</span>
+    </header>
+    <main>
+      <section id="auth-view" class="auth-card">
+        <span class="eyebrow">Команда Edium</span>
+        <h1>Заявки в команду</h1>
+        <p>Введи ключ доступа. Он останется только в памяти этой вкладки и исчезнет после её закрытия.</p>
+        <form id="auth-form">
+          <label for="access-token">Ключ доступа</label>
+          <input id="access-token" type="password" autocomplete="off" required />
+          <p id="auth-error" class="error" role="alert"></p>
+          <button type="submit">Открыть заявки</button>
+        </form>
+      </section>
+
+      <section id="applications-view" hidden>
+        <div class="page-head">
+          <div>
+            <span class="eyebrow">Команда Edium</span>
+            <h1>Заявки</h1>
+          </div>
+          <button id="lock-button" class="secondary-button" type="button">Закрыть доступ</button>
+        </div>
+        <div class="toolbar">
+          <label for="status-filter">Статус</label>
+          <select id="status-filter">
+            <option value="">Все</option>
+            <option value="new">Новая</option>
+            <option value="reviewing">Рассматриваем</option>
+            <option value="contacted">Связались</option>
+            <option value="accepted">Принята</option>
+            <option value="rejected">Отказ</option>
+          </select>
+          <button id="refresh-button" class="secondary-button" type="button">Обновить</button>
+        </div>
+        <p id="list-status" class="list-status" role="status"></p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Кандидат</th><th>Направление</th><th>Дата</th><th>Статус</th><th><span class="sr-only">Открыть</span></th></tr></thead>
+            <tbody id="applications-list"></tbody>
+          </table>
+        </div>
+        <div id="empty-state" class="empty-state" hidden>Заявок с таким статусом нет.</div>
+      </section>
+
+      <dialog id="application-dialog" aria-labelledby="candidate-name">
+        <div class="dialog-head">
+          <div><span class="eyebrow">Заявка</span><h2 id="candidate-name"></h2></div>
+          <button id="close-dialog" class="icon-button" type="button" aria-label="Закрыть">×</button>
+        </div>
+        <div id="candidate-details" class="details"></div>
+        <div class="dialog-actions">
+          <label for="candidate-status">Статус</label>
+          <select id="candidate-status">
+            <option value="new">Новая</option>
+            <option value="reviewing">Рассматриваем</option>
+            <option value="contacted">Связались</option>
+            <option value="accepted">Принята</option>
+            <option value="rejected">Отказ</option>
+          </select>
+          <button id="save-status" type="button">Сохранить статус</button>
+          <button id="download-resume" class="secondary-button" type="button">Скачать резюме</button>
+          <button id="delete-application" class="danger-button" type="button">Удалить заявку</button>
+        </div>
+        <p id="dialog-status" class="error" role="status"></p>
+      </dialog>
+    </main>
+  </body>
+</html>

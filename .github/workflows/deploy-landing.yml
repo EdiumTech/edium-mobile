@@ -24,6 +24,8 @@ jobs:
 
       - name: Сборка лендинга
         working-directory: landing
+        env:
+          VITE_JOIN_API_BASE: ${{ vars.JOIN_API_BASE_URL }}
         run: |
           npm ci
           npm run build
