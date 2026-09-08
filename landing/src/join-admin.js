@@ -159,6 +159,7 @@ function renderContest(value) {
     detail('Дедлайн', dateOrDash(value.deadline_at || value.start_before)),
     detail('Отправлен', dateOrDash(value.submitted_at)),
     detail('Версия заданий', value.task_set_version),
+    detail('Набор заданий', value.trackLabel || value.direction || 'Общий'),
     detail('Продление', value.extension_count ? 'Использовано' : 'Доступно'),
   )
   document.querySelector('#copy-contest-link').disabled = !value.inviteUrl
@@ -170,8 +171,8 @@ function renderContest(value) {
     const section = document.createElement('section'); section.className = 'contest-answer'
     const title = document.createElement('h4'); title.textContent = task.title
     const source = document.createElement('pre'); source.textContent = answer?.source || 'Ответ не добавлен'
-    const explanation = document.createElement('p'); explanation.textContent = answer?.explanation || 'Объяснение не добавлено'
-    section.append(title, source, explanation)
+    section.append(title, source)
+    if (answer?.explanation) { const explanation = document.createElement('p'); explanation.textContent = answer.explanation; section.append(explanation) }
     if (answer?.url) { const link = document.createElement('a'); link.href = answer.url; link.target = '_blank'; link.rel = 'noopener'; link.textContent = answer.url; section.append(link) }
     return section
   }))

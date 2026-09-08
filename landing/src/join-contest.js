@@ -14,7 +14,9 @@ let saveQueue = Promise.resolve()
 let lastSaveError = null
 let timerHandle = null
 let lastAnnouncedMinute = null
+let changingTask = false
 const announcedWarnings = new Set()
+const taskResults = new Map()
 
 function show(id) { for (const view of views) $(`#${view}`).hidden = view !== id }
 function formatDate(value) { return new Intl.DateTimeFormat('ru-RU', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value)) }
@@ -79,11 +81,43 @@ function updateTimer() {
   if (left <= 0) refreshContest()
 }
 
-function answerFor(task) { return contest.answers?.[task.id] || { source: task.starterCode || '', explanation: '', url: '' } }
+function answerFor(task) { return contest.answers?.[task.id] || { source: task.starterCode || '' } }
 
-function updateExplanationCounter() {
+function renderTests() {
   const task = contest.tasks[activeTask]
-  $('#explanation-help').textContent = `${$('#explanation').value.length} символов · для отправки нужно от ${task.minExplanation || 0} до ${task.maxExplanation || 2400}.`
+  const report = taskResults.get(task.id)
+  const summary = $('#test-summary')
+  const progress = $('#test-progress')
+  const results = $('#test-results')
+  results.replaceChildren()
+  progress.hidden = true
+  summary.className = 'test-summary'
+  if (!report) {
+    summary.textContent = 'Запусти проверку, чтобы увидеть результат всех тестов.'
+    return
+  }
+  if (report.pending) {
+    summary.textContent = 'Проверяем все тесты этой задачи…'
+    return
+  }
+  if (report.error) {
+    summary.textContent = report.error
+    summary.classList.add('test-error')
+    return
+  }
+  const stale = report.source !== $('#source').value
+  const { passed, total, tests } = report.result
+  summary.textContent = `Пройдено ${passed} из ${total} тестов.${stale ? ' Код изменился — запусти проверку снова.' : passed === total ? ' Всё сошлось!' : ' Можно поправить код и попробовать ещё.'}`
+  summary.classList.toggle('test-stale', stale)
+  progress.max = Math.max(1, total)
+  progress.value = passed
+  progress.hidden = false
+  results.replaceChildren(...tests.map(test => {
+    const row = document.createElement('div')
+    row.className = `test-result ${test.passed ? 'pass' : 'fail'}`
+    row.textContent = `${test.passed ? '✓' : '×'} ${test.name}${test.message ? ` — ${test.message}` : ''}`
+    return row
+  }))
 }
 
 function renderTask() {
@@ -96,16 +130,12 @@ function renderTask() {
   $('#task-output').textContent = task.signature
   $('#task-examples').replaceChildren(...task.publicExamples.map(example => {
     const box = document.createElement('div'); box.className = 'example'
-    const code = document.createElement('code'); code.textContent = `Вход: ${JSON.stringify(example.input)}\nРезультат: ${JSON.stringify(example.expected)}`
+    const code = document.createElement('code'); code.textContent = `Вход: ${JSON.stringify(example.input, null, 2)}\nРезультат: ${JSON.stringify(example.expected, null, 2)}`
     box.append(code); return box
   }))
-  $('#source').value = answer.source || task.starterCode || ''
-  $('#explanation').value = answer.explanation || ''
-  $('#explanation').minLength = task.minExplanation || 0
-  $('#explanation').maxLength = task.maxExplanation || 2400
-  updateExplanationCounter()
-  $('#solution-url').value = answer.url || ''
-  $('#test-results').replaceChildren()
+  $('#source').value = answer.source ?? task.starterCode ?? ''
+  $('#task-save-state').textContent = contest.answers?.[task.id] ? 'Сохранено' : ''
+  renderTests()
   document.querySelectorAll('#task-tabs button').forEach((button, index) => button.setAttribute('aria-current', String(index === activeTask)))
 }
 
@@ -114,8 +144,12 @@ function renderWorkspace() {
   const tabs = contest.tasks.map((task, index) => {
     const button = document.createElement('button'); button.type = 'button'; button.textContent = `${index + 1}. ${task.shortTitle || task.title}`
     button.addEventListener('click', async () => {
+      if (changingTask || $('#submit-button').disabled) return
+      changingTask = true
+      $('#source').readOnly = true
       try { await flushSave(); activeTask = index; renderTask() }
       catch (error) { $('#workspace-note').textContent = error.message }
+      finally { changingTask = false; $('#source').readOnly = false }
     })
     return button
   })
@@ -127,8 +161,11 @@ function renderWorkspace() {
 }
 
 function renderContest(value) {
-  contest = value
+  contest = { ...contest, ...value }
   syncClock(contest.serverNow)
+  const track = contest.trackLabel || contest.direction || 'Продуктовые задачи'
+  $('#intro-track').textContent = `Edium · ${track}`
+  $('#workspace-track').textContent = `${track} · JavaScript`
   if (['submitted', 'expired', 'revoked'].includes(contest.state)) return finishView(contest.state)
   if (contest.state === 'started') return renderWorkspace()
   $('#intro-count').textContent = String(contest.tasks.length)
@@ -139,7 +176,7 @@ function renderContest(value) {
 }
 
 function currentPayload() {
-  return { source: $('#source').value, explanation: $('#explanation').value, url: $('#solution-url').value || null, revision: contest.revision }
+  return { source: $('#source').value, revision: contest.revision }
 }
 
 function queueSave() {
@@ -150,6 +187,7 @@ function queueSave() {
 
 function saveCurrent() {
   clearTimeout(saveTimer)
+  saveTimer = null
   if (contest?.state !== 'started') return saveQueue
   const task = contest.tasks[activeTask]
   const draft = currentPayload()
@@ -161,7 +199,7 @@ function saveCurrent() {
       contest.revision = result.contest.revision
       contest.answers = result.contest.answers
       lastSaveError = null
-      $('#task-save-state').textContent = 'Сохранено'
+      $('#task-save-state').textContent = $('#source').value === draft.source && !saveTimer ? 'Сохранено' : 'Есть несохранённые изменения'
     } catch (error) {
       lastSaveError = error
       $('#task-save-state').textContent = error.code === 'revision_conflict' ? 'Открыта более новая версия в другой вкладке' : error.message
@@ -198,38 +236,49 @@ $('#start-button').addEventListener('click', async () => {
   finally { $('#start-button').disabled = false }
 })
 
-for (const field of ['#source', '#explanation', '#solution-url']) $(field).addEventListener('input', () => {
-  if (field === '#explanation') updateExplanationCounter()
+$('#source').addEventListener('input', () => {
+  renderTests()
   queueSave()
 })
 
 $('#source').addEventListener('keydown', event => {
-  if (event.key !== 'Tab') return
+  if (event.key !== 'Tab' || event.shiftKey || event.currentTarget.readOnly) return
   event.preventDefault()
   const field = event.currentTarget
   field.setRangeText('  ', field.selectionStart, field.selectionEnd, 'end')
+  renderTests()
   queueSave()
 })
 
 $('#run-button').addEventListener('click', async () => {
-  const button = $('#run-button'); button.disabled = true; button.textContent = 'Запускаем…'
-  $('#test-results').textContent = ''
+  if (changingTask || $('#submit-button').disabled) return
+  const button = $('#run-button'); button.disabled = true; button.textContent = 'Проверяем…'
+  const task = contest.tasks[activeTask]
+  const source = $('#source').value
+  taskResults.set(task.id, { source, pending: true })
+  renderTests()
   try {
     await flushSave()
-    const task = contest.tasks[activeTask]
-    const { result } = await api('/v1/contest/run', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ taskId: task.id, source: $('#source').value }) })
-    $('#test-results').replaceChildren(...result.tests.map(test => {
-      const row = document.createElement('div'); row.className = `test-result ${test.passed ? 'pass' : 'fail'}`; row.textContent = `${test.passed ? '✓' : '×'} ${test.name}${test.message ? ` — ${test.message}` : ''}`; return row
-    }))
-  } catch (error) { $('#test-results').textContent = error.message }
-  finally { button.disabled = false; button.textContent = 'Запустить тесты' }
+    const { result } = await api('/v1/contest/run', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ taskId: task.id, source }) })
+    // Derive counters from case results while an older API version is rolling out.
+    const total = Number.isInteger(result.total) ? result.total : result.tests.length
+    const passed = Number.isInteger(result.passed) ? result.passed : result.tests.filter(test => test.passed).length
+    taskResults.set(task.id, { source, result: { ...result, total, passed } })
+  } catch (error) { taskResults.set(task.id, { source, error: error.message }) }
+  finally {
+    renderTests()
+    button.disabled = false
+    button.textContent = 'Проверить все тесты'
+  }
 })
 
 $('#submit-button').addEventListener('click', async () => {
+  if (changingTask) return
   if (!window.confirm('Отправить решения? После этого изменить их будет нельзя.')) return
   const button = $('#submit-button'); button.disabled = true
+  $('#source').readOnly = true
   try { await flushSave(); renderContest((await api('/v1/contest/submit', { method: 'POST' })).contest) }
-  catch (error) { $('#workspace-note').textContent = error.message; button.disabled = false }
+  catch (error) { $('#workspace-note').textContent = error.message; button.disabled = false; $('#source').readOnly = false }
 })
 
 async function boot() {

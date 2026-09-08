@@ -67,7 +67,7 @@ jobs:
           cache: npm
           cache-dependency-path: landing/package-lock.json
 
-      - name: Build landing
+      - name: Test and build landing
         if: steps.changes.outputs.landing == 'true'
         working-directory: landing
-        run: npm ci && npm run build
+        run: npm ci && npm test && npm run build
