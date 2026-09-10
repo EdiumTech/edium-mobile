@@ -31,22 +31,44 @@
         <button id="start-button" type="button">Начать контест</button>
       </section>
       <section id="workspace" hidden>
-        <div class="workspace-head"><div><span id="workspace-track" class="eyebrow">JavaScript · ES2022</span><h1>За дело</h1></div><p id="workspace-note" aria-live="polite">Все изменения сохраняются автоматически.</p></div>
+        <div class="workspace-head">
+          <div><span id="workspace-track" class="eyebrow">JavaScript · ES2022</span><h1>За дело</h1></div>
+          <div class="workspace-actions"><p id="workspace-note" aria-live="polite">Все изменения сохраняются автоматически.</p><button id="submit-button" type="button">Отправить решения</button></div>
+        </div>
         <nav id="task-tabs" class="task-tabs" aria-label="Задачи"></nav>
         <article id="task-panel" class="task-panel">
-          <div class="task-copy"><span id="task-index" class="task-index"></span><h2 id="task-title"></h2><p id="task-input"></p><section><h3>Условия задачи</h3><p id="task-description"></p></section><section><h3>Формат ответа</h3><p id="task-output"></p></section><section><h3>Примеры</h3><div id="task-examples"></div></section></div>
+          <div class="task-copy">
+            <span id="task-index" class="task-index"></span><h2 id="task-title"></h2>
+            <section><h3>Рабочая ситуация</h3><p id="task-situation"></p></section>
+            <section><h3>Что сделать</h3><p id="task-goal"></p></section>
+            <section><h3>Входные данные</h3><ul id="task-input"></ul></section>
+            <section><h3>Правила</h3><ol id="task-rules"></ol></section>
+            <section><h3>Что вернуть</h3><p id="task-output"></p></section>
+            <section><h3>Код решения</h3><p id="task-signature"></p></section>
+            <section><h3>Примеры</h3><div id="task-examples"></div></section>
+          </div>
           <div class="solution">
             <div id="language-picker" hidden><label for="solution-language">Язык этой задачи</label><select id="solution-language" aria-describedby="language-help"></select><small id="language-help">На сервере сохраняется решение на выбранном языке. Черновик второго языка хранится только до обновления страницы.</small></div>
-            <label id="source-label" for="source">Решение</label>
-            <textarea id="source" maxlength="65536" spellcheck="false" autocomplete="off" autocapitalize="off" aria-describedby="source-help"></textarea>
-            <small id="source-help"></small>
+            <span id="source-label" class="source-label">Решение</span>
+            <div class="code-editor-shell">
+              <div class="editor-toolbar">
+                <span id="editor-filename" class="editor-filename">solution.js</span>
+                <div class="editor-tools" role="group" aria-label="Инструменты редактора">
+                  <button id="editor-undo" type="button" aria-label="Отменить изменение" title="Отменить изменение · Ctrl / ⌘ Z" disabled>↶</button>
+                  <button id="editor-redo" type="button" aria-label="Повторить изменение" title="Повторить изменение · Ctrl / ⌘ Shift Z" disabled>↷</button>
+                  <button id="editor-indent" type="button" title="Выровнять отступы во всём решении">Отступы</button>
+                </div>
+              </div>
+              <div id="code-editor"></div>
+              <div class="editor-statusbar"><span id="editor-position">Строка 1, столбец 1</span><span id="editor-indent-size"></span><span>UTF-8</span></div>
+            </div>
+            <p id="editor-limit" class="editor-limit" role="status"></p>
             <div class="solution-actions"><button id="run-button" class="secondary-button" type="button">Проверить все тесты</button><span id="task-save-state" role="status"></span></div>
-            <p id="test-summary" class="test-summary" role="status">Запусти проверку, чтобы увидеть результат всех тестов.</p>
+            <p id="test-summary" class="test-summary" role="status"></p>
             <progress id="test-progress" aria-label="Пройдено тестов" max="1" value="0" hidden></progress>
             <div id="test-results" class="test-results" aria-label="Результаты тестов"></div>
           </div>
         </article>
-        <div class="submit-bar"><p>Отправить можно один раз. После отправки изменить решения нельзя.</p><button id="submit-button" type="button">Отправить решения</button></div>
       </section>
       <section id="finished-view" class="state-card" hidden><span class="eyebrow">Контест завершён</span><h1 id="finished-title">Решения отправлены</h1><p id="finished-message">Спасибо! Команда Edium рассмотрит решения и свяжется с тобой.</p><div id="finished-answers"></div></section>
     </main>

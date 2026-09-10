@@ -28,6 +28,7 @@ const contestAnswers = document.querySelector('#contest-answers')
 const reviewTasks = document.querySelector('#review-tasks')
 const reviewConclusion = document.querySelector('#review-conclusion')
 const contestStatus = document.querySelector('#contest-status')
+const contestDirection = document.querySelector('#contest-direction')
 
 let accessToken = ''
 let currentApplication = null
@@ -170,7 +171,7 @@ function renderContest(value) {
     const answer = value.answers?.[task.id]
     const section = document.createElement('section'); section.className = 'contest-answer'
     const title = document.createElement('h4'); title.textContent = task.title
-    const language = document.createElement('p'); language.textContent = { javascript: 'JavaScript', kotlin: 'Kotlin', swift: 'Swift' }[answer?.language || task.defaultLanguage || 'javascript']
+    const language = document.createElement('p'); language.textContent = { javascript: 'JavaScript', kotlin: 'Kotlin', swift: 'Swift', python: 'Python', go: 'Go' }[answer?.language || task.defaultLanguage || 'javascript']
     const source = document.createElement('pre'); source.textContent = answer?.source || 'Ответ не добавлен'
     section.append(title, language, source)
     if (answer?.explanation) { const explanation = document.createElement('p'); explanation.textContent = answer.explanation; section.append(explanation) }
@@ -193,6 +194,8 @@ async function openApplication(id) {
     const result = await api(`/v1/admin/applications/${encodeURIComponent(id)}`)
     currentApplication = result.application
     const item = currentApplication
+    if ([...contestDirection.options].some(option => option.value === item.direction)) contestDirection.value = item.direction
+    else contestDirection.selectedIndex = 0
     candidateName.textContent = `${item.firstName} ${item.lastName}`
     candidateStatus.value = item.status
     candidateDetails.replaceChildren(
@@ -287,6 +290,7 @@ document.querySelector('#create-contest').addEventListener('click', () => contes
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
+    direction: contestDirection.value,
     durationMinutes: Number(document.querySelector('#contest-duration').value),
     startWithinDays: Number(document.querySelector('#contest-days').value),
   }),

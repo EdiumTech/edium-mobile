@@ -1,5 +1,6 @@
 import './join-contest.css'
 import './join-contest-layout.css'
+import { createCodeEditor } from './join-code-editor.js'
 
 const configuredApiBase = (import.meta.env.VITE_JOIN_API_BASE || '').replace(/\/$/, '')
 const apiBase = configuredApiBase || (['localhost', '127.0.0.1'].includes(location.hostname) ? 'http://127.0.0.1:8787' : '')
@@ -19,7 +20,34 @@ let changingTask = false
 const announcedWarnings = new Set()
 const taskResults = new Map()
 const languageDrafts = new Map()
-const languageLabels = { javascript: 'JavaScript', kotlin: 'Kotlin', swift: 'Swift' }
+const languageLabels = { javascript: 'JavaScript', kotlin: 'Kotlin', swift: 'Swift', python: 'Python', go: 'Go' }
+const editor = createCodeEditor({
+  parent: $('#code-editor'),
+  onChange() {
+    $('#editor-limit').textContent = ''
+    if (contest?.state !== 'started') return
+    renderTests()
+    queueSave()
+  },
+  onStatus({ line, column, canUndo, canRedo, indentLabel }) {
+    $('#editor-position').textContent = `Строка ${line}, столбец ${column}`
+    $('#editor-indent-size').textContent = indentLabel
+    $('#editor-undo').disabled = !canUndo
+    $('#editor-redo').disabled = !canRedo
+  },
+  onLimit() {
+    $('#editor-limit').textContent = 'Лимит — 64 КБ кода. Последнее изменение не применено; прежний код сохранён в редакторе.'
+  },
+  onRun() {
+    if (contest?.state === 'started' && !$('#run-button').disabled && !$('#submit-button').disabled && !changingTask) $('#run-button').click()
+  },
+})
+
+function setEditorReadOnly(value) {
+  editor.setReadOnly(value)
+  $('#editor-indent').disabled = value
+}
+
 function languagesFor(task) {
   return task.languages || { javascript: { label: 'JavaScript', starterCode: task.starterCode, signature: task.signature } }
 }
@@ -49,6 +77,7 @@ async function api(path, options = {}) {
 function syncClock(value) { if (value) clockOffset = new Date(value).getTime() - Date.now() }
 
 function finishView(state) {
+  setEditorReadOnly(true)
   clearInterval(timerHandle)
   $('#timer').textContent = '00:00'
   const copy = {
@@ -101,11 +130,11 @@ function renderTests() {
   progress.hidden = true
   summary.className = 'test-summary'
   if (!report) {
-    summary.textContent = 'Запусти проверку, чтобы увидеть результат всех тестов.'
+    summary.textContent = ''
     return
   }
   if (report.pending) {
-    summary.textContent = activeLanguage === 'javascript' ? 'Проверяем все тесты этой задачи…' : 'Компилируем решение и проверяем все тесты. Это может занять немного времени…'
+    summary.textContent = ['javascript', 'python'].includes(activeLanguage) ? 'Проверяем все тесты этой задачи…' : 'Компилируем решение и проверяем все тесты. Это может занять немного времени…'
     return
   }
   if (report.error) {
@@ -113,7 +142,7 @@ function renderTests() {
     summary.classList.add('test-error')
     return
   }
-  const stale = report.source !== $('#source').value
+  const stale = report.source !== editor.getValue()
   const { passed, total, tests } = report.result
   summary.textContent = `Пройдено ${passed} из ${total} тестов.${stale ? ' Код изменился — запусти проверку снова.' : passed === total ? ' Всё сошлось!' : ' Можно поправить код и попробовать ещё.'}`
   summary.classList.toggle('test-stale', stale)
@@ -135,49 +164,73 @@ function renderTask() {
   activeLanguage = answer.language || task.defaultLanguage || 'javascript'
   $('#task-index').textContent = `Задача ${activeTask + 1} из ${contest.tasks.length}`
   $('#task-title').textContent = task.title
-  $('#task-description').textContent = task.description
-  $('#task-input').textContent = task.summary
+  const statement = task.statement || {
+    situation: task.summary,
+    goal: task.description,
+    input: [],
+    rules: [],
+    output: task.signature,
+    exampleNotes: [],
+  }
+  $('#task-situation').textContent = statement.situation
+  $('#task-goal').textContent = statement.goal
+  $('#task-input').replaceChildren(...(statement.input || []).map(item => {
+    const row = document.createElement('li')
+    const name = document.createElement('code'); name.textContent = item.name
+    row.append(name, ` — ${item.description}`)
+    return row
+  }))
+  $('#task-rules').replaceChildren(...(statement.rules || []).map(rule => {
+    const row = document.createElement('li'); row.textContent = rule; return row
+  }))
+  $('#task-output').textContent = statement.output
   $('#language-picker').hidden = Object.keys(languages).length < 2
   $('#solution-language').replaceChildren(...Object.entries(languages).map(([language, config]) => {
     const option = document.createElement('option'); option.value = language; option.textContent = config.label || languageLabels[language]; return option
   }))
-  $('#task-examples').replaceChildren(...task.publicExamples.map(example => {
+  $('#task-examples').replaceChildren(...task.publicExamples.map((example, index) => {
     const box = document.createElement('div'); box.className = 'example'
     const code = document.createElement('code'); code.textContent = `Вход: ${JSON.stringify(example.input, null, 2)}\nРезультат: ${JSON.stringify(example.expected, null, 2)}`
-    box.append(code); return box
+    const note = document.createElement('p'); note.textContent = statement.exampleNotes?.[index] || 'Результат получен по правилам выше.'
+    box.append(code, note); return box
   }))
-  $('#source').value = answer.source ?? languages[activeLanguage]?.starterCode ?? ''
-  renderLanguage()
+  renderLanguage(answer.source ?? languages[activeLanguage]?.starterCode ?? '')
   $('#task-save-state').textContent = contest.answers?.[task.id] ? 'Сохранено' : ''
   renderTests()
   document.querySelectorAll('#task-tabs button').forEach((button, index) => button.setAttribute('aria-current', String(index === activeTask)))
 }
 
-function renderLanguage() {
+function renderLanguage(value = editor.getValue()) {
   const task = contest.tasks[activeTask]
   const config = languagesFor(task)[activeLanguage]
   $('#solution-language').value = activeLanguage
   $('#source-label').textContent = `Решение · ${config.label || languageLabels[activeLanguage]}`
-  $('#task-output').textContent = config.signature
-  const hints = {
-    javascript: 'Объяви function solve(input) и верни JSON-совместимое значение. Без TypeScript и внешних библиотек.',
-    kotlin: 'Объяви fun solve(input: Map<String, Any?>): Map<String, Any?>. Вход и результат — JSON-объекты. Доступна стандартная библиотека Kotlin; Android API и внешние зависимости не нужны.',
-    swift: 'Объяви func solve(_ input: [String: Any]) -> [String: Any]. Вход и результат — JSON-объекты. Доступны стандартная библиотека Swift и Foundation; UIKit и внешние зависимости не нужны.',
+  const extensions = { javascript: 'js', python: 'py', go: 'go', kotlin: 'kt', swift: 'swift' }
+  $('#editor-filename').textContent = `solution.${extensions[activeLanguage]}`
+  $('#editor-limit').textContent = ''
+  editor.setDocument({ key: resultKey(task), value, language: activeLanguage, label: `Решение · ${config.label || languageLabels[activeLanguage]}` })
+  const runtime = {
+    javascript: 'JavaScript ES2022, без TypeScript, сети и внешних библиотек.',
+    kotlin: 'Стандартная библиотека Kotlin; без Android API, сети и внешних зависимостей. Числа из JSON приходят как Number.',
+    swift: 'Стандартная библиотека Swift и Foundation; без UIKit, сети и внешних зависимостей.',
+    python: 'Python 3.12 и стандартная библиотека; без pip, файлов, сети и вызовов моделей. Печатать результат не нужно.',
+    go: 'Стандартная библиотека Go; без сети и внешних зависимостей. JSON-числа приходят как float64, main добавит контест.',
   }
-  $('#source-help').textContent = `${hints[activeLanguage]} Tab добавляет отступ, Shift+Tab выводит фокус из редактора.`
+  $('#task-signature').textContent = `${config.signature}. ${runtime[activeLanguage]}`
 }
 
 function renderWorkspace() {
   show('workspace')
+  if (!changingTask && !$('#submit-button').disabled) setEditorReadOnly(false)
   const tabs = contest.tasks.map((task, index) => {
     const button = document.createElement('button'); button.type = 'button'; button.textContent = `${index + 1}. ${task.shortTitle || task.title}`
     button.addEventListener('click', async () => {
       if (changingTask || $('#submit-button').disabled) return
       changingTask = true
-      $('#source').readOnly = true
+      setEditorReadOnly(true)
       try { await flushSave(); activeTask = index; renderTask() }
       catch (error) { $('#workspace-note').textContent = error.message }
-      finally { changingTask = false; $('#source').readOnly = false }
+      finally { changingTask = false; setEditorReadOnly(contest.state !== 'started') }
     })
     return button
   })
@@ -197,7 +250,11 @@ function renderContest(value) {
   $('#workspace-track').textContent = `${track} · ${supported.map(language => languageLabels[language]).join(' + ')}`
   $('#intro-format').textContent = supported.includes('kotlin') && supported.includes('swift')
     ? 'Одна задача обязательно на Kotlin, одна — на Swift. Для третьей выбери любой из этих двух языков. Ответы — только код.'
-    : 'Пиши только код: функцию solve(input) на JavaScript (ES2022).'
+    : supported[0] === 'python'
+      ? 'Все три задачи решаются на Python: объяви функцию solve(data). Работаем с датасетами, оценкой ответов и контекстом для AI. Ответы — только код, без внешних библиотек и вызовов моделей.'
+      : supported[0] === 'go'
+        ? 'Все три задачи решаются на Go: package main и функция Solve(input). Разбираемся с вебхуками, сбоями сервиса и квотами. Ответы — только код, без запуска настоящих серверов.'
+        : 'Пиши только код: функцию solve(input) на JavaScript (ES2022).'
   if (['submitted', 'expired', 'revoked'].includes(contest.state)) return finishView(contest.state)
   if (contest.state === 'started') return renderWorkspace()
   $('#intro-count').textContent = String(contest.tasks.length)
@@ -208,7 +265,7 @@ function renderContest(value) {
 }
 
 function currentPayload() {
-  return { source: $('#source').value, language: activeLanguage, revision: contest.revision }
+  return { source: editor.getValue(), language: activeLanguage, revision: contest.revision }
 }
 
 function queueSave() {
@@ -231,7 +288,7 @@ function saveCurrent() {
       contest.revision = result.contest.revision
       contest.answers = result.contest.answers
       lastSaveError = null
-      $('#task-save-state').textContent = $('#source').value === draft.source && activeLanguage === draft.language && !saveTimer ? 'Сохранено' : 'Есть несохранённые изменения'
+      $('#task-save-state').textContent = editor.getValue() === draft.source && activeLanguage === draft.language && !saveTimer ? 'Сохранено' : 'Есть несохранённые изменения'
     } catch (error) {
       lastSaveError = error
       $('#task-save-state').textContent = error.code === 'revision_conflict' ? 'Открыта более новая версия в другой вкладке' : error.message
@@ -255,6 +312,7 @@ async function refreshContest() {
 
 function showError(error) {
   clearInterval(timerHandle)
+  setEditorReadOnly(true)
   $('#error-title').textContent = error.status === 404 ? 'Ссылка недействительна' : 'Контест недоступен'
   $('#error-message').textContent = error.message
   show('error-view')
@@ -268,10 +326,10 @@ $('#start-button').addEventListener('click', async () => {
   finally { $('#start-button').disabled = false }
 })
 
-$('#source').addEventListener('input', () => {
-  renderTests()
-  queueSave()
-})
+$('#editor-undo').addEventListener('click', () => { editor.undo(); editor.focus() })
+$('#editor-redo').addEventListener('click', () => { editor.redo(); editor.focus() })
+$('#editor-indent').addEventListener('click', () => { editor.indentAll(); editor.focus() })
+$('#source-label').addEventListener('click', () => editor.focus())
 
 $('#solution-language').addEventListener('change', async () => {
   const task = contest.tasks[activeTask]
@@ -279,34 +337,24 @@ $('#solution-language').addEventListener('change', async () => {
   $('#solution-language').value = activeLanguage
   if (changingTask || $('#submit-button').disabled || nextLanguage === activeLanguage || !languagesFor(task)[nextLanguage]) return
   changingTask = true
-  $('#source').readOnly = true
+  setEditorReadOnly(true)
   $('#solution-language').disabled = true
   try {
     await flushSave()
-    languageDrafts.set(resultKey(task), $('#source').value)
+    languageDrafts.set(resultKey(task), editor.getValue())
     activeLanguage = nextLanguage
-    $('#source').value = languageDrafts.get(resultKey(task)) ?? languagesFor(task)[activeLanguage].starterCode ?? ''
-    renderLanguage()
+    renderLanguage(languageDrafts.get(resultKey(task)) ?? languagesFor(task)[activeLanguage].starterCode ?? '')
     renderTests()
     queueSave()
   } catch (error) { $('#workspace-note').textContent = error.message }
-  finally { changingTask = false; $('#source').readOnly = false; $('#solution-language').disabled = false }
-})
-
-$('#source').addEventListener('keydown', event => {
-  if (event.key !== 'Tab' || event.shiftKey || event.currentTarget.readOnly) return
-  event.preventDefault()
-  const field = event.currentTarget
-  field.setRangeText('  ', field.selectionStart, field.selectionEnd, 'end')
-  renderTests()
-  queueSave()
+  finally { changingTask = false; setEditorReadOnly(contest.state !== 'started'); $('#solution-language').disabled = false }
 })
 
 $('#run-button').addEventListener('click', async () => {
   if (changingTask || $('#submit-button').disabled) return
   const button = $('#run-button'); button.disabled = true; button.textContent = 'Проверяем…'
   const task = contest.tasks[activeTask]
-  const source = $('#source').value
+  const source = editor.getValue()
   const language = activeLanguage
   const key = resultKey(task, language)
   taskResults.set(key, { source, pending: true })
@@ -330,9 +378,9 @@ $('#submit-button').addEventListener('click', async () => {
   if (changingTask) return
   if (!window.confirm('Отправить решения? После этого изменить их будет нельзя.')) return
   const button = $('#submit-button'); button.disabled = true
-  $('#source').readOnly = true
+  setEditorReadOnly(true)
   try { await flushSave(); renderContest((await api('/v1/contest/submit', { method: 'POST' })).contest) }
-  catch (error) { $('#workspace-note').textContent = error.message; button.disabled = false; $('#source').readOnly = false }
+  catch (error) { $('#workspace-note').textContent = error.message; button.disabled = false; setEditorReadOnly(contest.state !== 'started') }
 })
 
 async function boot() {
