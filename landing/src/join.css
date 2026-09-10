@@ -11,7 +11,7 @@
   --accent-ink: #263000;
   --error: #bd2c2c;
   --error-bg: #fff4f3;
-  --focus: #6558d3;
+  --focus: #dfff45;
   font-family: "Inter", system-ui, sans-serif;
   color: var(--ink);
   background: var(--wash);
