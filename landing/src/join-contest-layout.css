@@ -1,0 +1,93 @@
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+}
+
+header, main {
+  width: min(1540px, calc(100% - 40px));
+}
+
+.task-panel {
+  min-width: 0;
+  grid-template-columns: minmax(420px, .8fr) minmax(620px, 1.2fr);
+}
+
+.task-copy, .solution { min-width: 0; }
+.task-copy p, .example code, .test-result { overflow-wrap: anywhere; }
+.task-copy section { margin-top: 24px; }
+.task-copy section h3 { margin-top: 0; }
+.task-copy ul, .task-copy ol { display: grid; gap: 8px; margin: 8px 0 0; padding-left: 22px; color: #494a47; font-size: 13px; line-height: 1.55; }
+.task-copy li code { padding: 2px 5px; border-radius: 4px; background: var(--wash); color: var(--ink); font: 11px "JetBrains Mono", monospace; }
+.example p { margin: 9px 0 0; color: var(--muted); font-size: 11px; line-height: 1.5; }
+.workspace-actions { display: flex; align-items: center; justify-content: flex-end; gap: 18px; }
+.workspace-actions p { max-width: 300px; margin: 0; text-align: right; }
+.workspace-actions button { flex: 0 0 auto; }
+.solution small { font-size: 11px; line-height: 1.6; }
+.solution-actions { flex-wrap: wrap; }
+.test-summary { margin: 8px 0 0; font-size: 12px; line-height: 1.6; }
+.test-stale { color: #795909; }
+.test-error { color: var(--danger); }
+#test-progress { width: 100%; height: 8px; accent-color: var(--violet); }
+#language-picker { display: grid; gap: 8px; margin-bottom: 8px; }
+#solution-language { width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 9px; background: var(--paper); font: inherit; }
+#solution-language:focus-visible { outline: 3px solid rgba(101,88,211,.22); outline-offset: 2px; }
+
+.source-label { margin-top: 7px; font-size: 11px; font-weight: 800; cursor: text; }
+.code-editor-shell { min-width: 0; overflow: hidden; border: 1px solid #353841; border-radius: 13px; background: #191c24; }
+.code-editor-shell:focus-within { border-color: #a9a0ff; box-shadow: 0 0 0 3px rgba(101,88,211,.14); }
+.editor-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 12px; border-bottom: 1px solid #353841; background: #22252e; }
+.editor-filename { min-width: 0; color: #eeeef3; font: 500 12px "JetBrains Mono", monospace; }
+.editor-filename::before { content: ''; display: inline-block; width: 6px; height: 6px; margin-right: 9px; border-radius: 50%; background: var(--accent); vertical-align: middle; }
+.editor-tools { display: flex; gap: 3px; }
+.editor-tools button { min-height: 32px; min-width: 32px; padding: 5px 9px; border: 1px solid transparent; border-radius: 6px; background: transparent; color: #d6d6e0; font-size: 16px; font-weight: 500; }
+.editor-tools button:hover:not(:disabled) { background: #363a49; color: #fff; }
+.editor-tools button:focus-visible { outline: 2px solid #b9afff; outline-offset: 1px; }
+.editor-tools button:disabled { opacity: .38; }
+#editor-indent { font: 500 11px "Inter", system-ui, sans-serif; }
+#code-editor { min-width: 0; }
+.editor-statusbar { display: flex; flex-wrap: wrap; gap: 8px 15px; padding: 9px 13px; border-top: 1px solid #353841; color: #aeb3c4; font: 10px/1.4 "JetBrains Mono", monospace; }
+#editor-position { margin-right: auto; }
+.editor-limit { margin: 0; color: var(--danger); font-size: 11px; line-height: 1.5; }
+.editor-limit:empty { display: none; }
+
+@media (max-width: 620px) {
+  header, main { width: min(100% - 24px, 1540px); }
+  .workspace-actions { width: 100%; align-items: stretch; flex-direction: column-reverse; gap: 10px; }
+  .workspace-actions p { max-width: none; text-align: left; }
+  .workspace-actions button { width: 100%; }
+  .editor-toolbar { padding: 8px; }
+  .editor-statusbar { padding: 8px; gap: 6px 10px; }
+  .editor-filename { font-size: 11px; }
+}
+
+@media (max-width: 1320px) {
+  .task-panel { grid-template-columns: 1fr; }
+  .task-copy { border-right: 0; border-bottom: 1px solid var(--line); }
+}
+
+@media (min-width: 841px) {
+  #workspace {
+    display: grid;
+    grid-template-columns: 210px minmax(0, 1fr);
+    gap: 0 14px;
+  }
+
+  .workspace-head {
+    grid-column: 1 / -1;
+  }
+
+  .task-tabs {
+    flex-direction: column;
+    align-self: start;
+    overflow: visible;
+  }
+
+  .task-tabs button {
+    width: 100%;
+    text-align: left;
+    white-space: normal;
+  }
+}

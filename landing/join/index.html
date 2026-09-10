@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Присоединиться к команде — Edium</title>
+    <meta name="description" content="Расскажите о себе и о том, чем хотите заниматься вместе с командой Edium." />
+    <link rel="icon" href="/logo.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <script type="module" src="/src/join.js"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#application-form">К форме заявки</a>
+
+    <header class="site-header">
+      <div class="nav-inner">
+        <a href="/" class="brand" aria-label="Edium — на главную">
+          <img src="/logo.png" alt="" />
+          <span>Edium</span>
+        </a>
+        <a class="back-link" href="/">
+          <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6" /></svg>
+          На главную
+        </a>
+      </div>
+    </header>
+
+    <main>
+      <section class="join-hero" aria-labelledby="join-title">
+        <div class="hero-copy">
+          <span class="eyebrow">Команда Edium</span>
+          <h1 id="join-title">Давай делать Edium вместе</h1>
+          <p>Расскажи, что тебя увлекает, чем хочешь заниматься и какой опыт можешь привнести в команду.</p>
+          <div class="hero-note">
+            <span class="hero-note-mark" aria-hidden="true">↳</span>
+            <span>Мы не привязываем эту форму к конкретной вакансии — нам важно познакомиться.</span>
+          </div>
+        </div>
+        <div class="hero-shape" aria-hidden="true">
+          <span class="shape-card shape-card-one">идея</span>
+          <span class="shape-card shape-card-two">дело</span>
+          <span class="shape-dot"></span>
+          <svg viewBox="0 0 330 280" role="presentation">
+            <path d="M26 168c36-70 77-104 124-101 65 4 50 79 109 84 24 2 42-7 56-27" />
+            <path d="M52 224c52 17 105 13 157-12" />
+          </svg>
+        </div>
+      </section>
+
+      <section class="form-shell" aria-label="Заявка в команду Edium">
+        <div class="form-intro">
+          <span class="form-number">01</span>
+          <div>
+            <h2>Расскажи о себе</h2>
+            <p>Обязательные поля отмечены звёздочкой. Введённые данные не сохраняются в браузере.</p>
+          </div>
+        </div>
+
+        <form id="application-form" novalidate>
+          <div id="form-error-summary" class="error-summary" role="alert" tabindex="-1" hidden>
+            <strong>Проверь поля формы</strong>
+            <ul></ul>
+          </div>
+
+          <fieldset>
+            <legend>
+              <span class="legend-index">1</span>
+              Контакты
+            </legend>
+
+            <div class="field-grid two-columns">
+              <div class="field">
+                <label for="first-name">Имя <span aria-hidden="true">*</span></label>
+                <input id="first-name" name="firstName" type="text" autocomplete="given-name" maxlength="80" required />
+                <p class="field-error" id="first-name-error"></p>
+              </div>
+              <div class="field">
+                <label for="last-name">Фамилия <span aria-hidden="true">*</span></label>
+                <input id="last-name" name="lastName" type="text" autocomplete="family-name" maxlength="80" required />
+                <p class="field-error" id="last-name-error"></p>
+              </div>
+            </div>
+
+            <div class="field-grid two-columns">
+              <div class="field">
+                <label for="telegram">Telegram <span aria-hidden="true">*</span></label>
+                <input id="telegram" name="telegram" type="text" autocomplete="off" inputmode="text" placeholder="@username или t.me/username" required />
+                <p class="field-hint">Приведём ссылку к виду @username.</p>
+                <p class="field-error" id="telegram-error"></p>
+              </div>
+              <div class="field">
+                <label for="phone">Телефон <span aria-hidden="true">*</span></label>
+                <input id="phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" placeholder="+49 151 23456789" required />
+                <p class="field-hint">Международный формат с кодом страны.</p>
+                <p class="field-error" id="phone-error"></p>
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="email">Email <span class="optional">необязательно</span></label>
+              <input id="email" name="email" type="email" autocomplete="email" inputmode="email" placeholder="name@example.com" />
+              <p class="field-hint">Если укажешь, пришлём подтверждение получения заявки.</p>
+              <p class="field-error" id="email-error"></p>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>
+              <span class="legend-index">2</span>
+              Интерес и опыт
+            </legend>
+
+            <div class="field">
+              <label for="direction">Интересующее направление <span aria-hidden="true">*</span></label>
+              <select id="direction" name="direction" required aria-describedby="direction-help">
+                <option value="">Выбери направление</option>
+                <option>Бэкенд</option>
+                <option>Фронтенд</option>
+                <option>Мобильная разработка</option>
+                <option>AI/ML</option>
+                <option>Системная разработка</option>
+              </select>
+              <p class="field-hint" id="direction-help">Бэкенд — Go, фронтенд и системная разработка — JavaScript, AI/ML — Python. В мобильном контесте обязательны Kotlin и Swift.</p>
+              <p class="field-error" id="direction-error"></p>
+            </div>
+
+            <div class="field">
+              <div class="label-row">
+                <label for="motivation">Мотивационное письмо <span aria-hidden="true">*</span></label>
+                <span id="motivation-counter" class="counter" aria-live="polite">0 / 4000</span>
+              </div>
+              <textarea id="motivation" name="motivation" rows="8" minlength="40" maxlength="4000" placeholder="Почему тебе интересно присоединиться к Edium? Чем хочешь заниматься и что можешь привнести?" required></textarea>
+              <p class="field-hint">От 40 до 4000 символов.</p>
+              <p class="field-error" id="motivation-error"></p>
+            </div>
+
+            <div class="field">
+              <label for="portfolio-url">Портфолио, GitHub или личный сайт <span class="optional">необязательно</span></label>
+              <input id="portfolio-url" name="portfolioUrl" type="url" inputmode="url" placeholder="https://github.com/username" />
+              <p class="field-error" id="portfolio-url-error"></p>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>
+              <span class="legend-index">3</span>
+              Резюме
+            </legend>
+
+            <div class="field file-field">
+              <label for="resume">Резюме <span aria-hidden="true">*</span></label>
+              <div id="drop-zone" class="drop-zone">
+                <input id="resume" name="resume" type="file" accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" required />
+                <div class="drop-zone-empty">
+                  <span class="upload-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M12 16V4m0 0L7 9m5-5 5 5M5 15v4h14v-4" /></svg>
+                  </span>
+                  <strong>Выбери файл</strong> или перетащи сюда
+                  <small>PDF или DOCX, до 10 МБ</small>
+                </div>
+                <div class="drop-zone-file" hidden>
+                  <span class="file-type" aria-hidden="true">PDF</span>
+                  <span class="file-meta">
+                    <strong id="file-name"></strong>
+                    <small id="file-size"></small>
+                  </span>
+                  <button type="button" id="remove-file" aria-label="Удалить выбранное резюме">
+                    <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18" /></svg>
+                  </button>
+                </div>
+              </div>
+              <p class="field-error" id="resume-error"></p>
+            </div>
+          </fieldset>
+
+          <div class="anti-spam" aria-hidden="true">
+            <label for="company">Компания</label>
+            <input id="company" name="company" type="text" tabindex="-1" autocomplete="off" />
+          </div>
+
+          <div class="consent-row">
+            <input id="consent" name="consent" type="checkbox" required />
+            <label for="consent">Я согласен(на) на обработку указанных данных и резюме для рассмотрения возможности сотрудничества с Edium в соответствии с <a href="/privacy/" target="_blank" rel="noopener">политикой обработки данных</a>.</label>
+            <p class="field-error" id="consent-error"></p>
+          </div>
+
+          <div class="submit-row">
+            <button type="submit" id="submit-button" class="submit-button">
+              <span class="submit-label">Отправить заявку</span>
+              <span class="submit-loading" hidden>
+                <span class="spinner" aria-hidden="true"></span>
+                <span id="submit-progress">Отправляем…</span>
+              </span>
+            </button>
+            <p>Поля и файл дополнительно проверяются на сервере.</p>
+          </div>
+        </form>
+
+        <section id="success-state" class="success-state" tabindex="-1" hidden aria-labelledby="success-title">
+          <div class="success-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="m5 12 4 4L19 6" /></svg>
+          </div>
+          <span class="eyebrow">Готово</span>
+          <h2 id="success-title">Спасибо! Заявка получена.</h2>
+          <p>Если увидим подходящее направление для сотрудничества, свяжемся с тобой.</p>
+          <a href="/">Вернуться на главную</a>
+        </section>
+      </section>
+    </main>
+
+    <footer>
+      <a href="/" class="brand"><img src="/logo.png" alt="" /><span>Edium</span></a>
+      <div class="footer-links">
+        <a href="/privacy/">Политика конфиденциальности</a>
+        <a href="/terms/">Пользовательское соглашение</a>
+      </div>
+    </footer>
+  </body>
+</html>

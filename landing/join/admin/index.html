@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex,nofollow,noarchive" />
+    <title>Заявки в команду — Edium</title>
+    <link rel="icon" href="/logo.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <script type="module" src="/src/join-admin.js"></script>
+  </head>
+  <body>
+    <header>
+      <a href="/" class="brand"><img src="/logo.png" alt="" /><span>Edium</span></a>
+      <span class="secure-label">Закрытый раздел</span>
+    </header>
+    <main>
+      <section id="auth-view" class="auth-card">
+        <span class="eyebrow">Команда Edium</span>
+        <h1>Заявки в команду</h1>
+        <p>Введи ключ доступа. Он останется только в памяти этой вкладки и исчезнет после её закрытия.</p>
+        <form id="auth-form">
+          <label for="access-token">Ключ доступа</label>
+          <input id="access-token" type="password" autocomplete="off" required />
+          <p id="auth-error" class="error" role="alert"></p>
+          <button type="submit">Открыть заявки</button>
+        </form>
+      </section>
+
+      <section id="applications-view" hidden>
+        <div class="page-head">
+          <div>
+            <span class="eyebrow">Команда Edium</span>
+            <h1>Заявки</h1>
+          </div>
+          <button id="lock-button" class="secondary-button" type="button">Закрыть доступ</button>
+        </div>
+        <div class="toolbar">
+          <label for="status-filter">Статус</label>
+          <select id="status-filter">
+            <option value="">Все</option>
+            <option value="new">Новая</option>
+            <option value="reviewing">Рассматриваем</option>
+            <option value="contacted">Связались</option>
+            <option value="accepted">Принята</option>
+            <option value="rejected">Отказ</option>
+          </select>
+          <label for="contest-filter">Контест</label>
+          <select id="contest-filter">
+            <option value="">Все</option><option value="none">Не назначен</option><option value="invited">Приглашён</option><option value="opened">Открыт</option><option value="started">Идёт</option><option value="submitted">Отправлен</option><option value="expired">Истёк</option><option value="revoked">Отозван</option>
+          </select>
+          <button id="refresh-button" class="secondary-button" type="button">Обновить</button>
+        </div>
+        <p id="list-status" class="list-status" role="status"></p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Кандидат</th><th>Направление</th><th>Дата</th><th>Статус</th><th>Контест</th><th><span class="sr-only">Открыть</span></th></tr></thead>
+            <tbody id="applications-list"></tbody>
+          </table>
+        </div>
+        <div id="empty-state" class="empty-state" hidden>Заявок с таким статусом нет.</div>
+      </section>
+
+      <dialog id="application-dialog" aria-labelledby="candidate-name">
+        <div class="dialog-head">
+          <div><span class="eyebrow">Заявка</span><h2 id="candidate-name"></h2></div>
+          <button id="close-dialog" class="icon-button" type="button" aria-label="Закрыть">×</button>
+        </div>
+        <div id="candidate-details" class="details"></div>
+        <section id="contest-panel" class="contest-panel" aria-labelledby="contest-heading">
+          <div class="contest-head"><div><span class="eyebrow">Практическая часть</span><h3 id="contest-heading">Контест</h3></div><span id="contest-state" class="status-pill"></span></div>
+          <div id="contest-empty">
+            <p>Выбери набор задач и создай персональную ссылку. Кандидат получит именно этот контест и не сможет заменить его другим. Email отправится через существующий Herald; если email не указан, ссылку можно скопировать вручную.</p>
+            <div class="inline-form">
+              <label>Набор задач<select id="contest-direction"><option>Бэкенд</option><option>Фронтенд</option><option>Мобильная разработка</option><option>AI/ML</option><option>Системная разработка</option></select></label>
+              <label>Время, минут<input id="contest-duration" type="number" min="15" max="240" value="90" /></label>
+              <label>Начать в течение, дней<input id="contest-days" type="number" min="1" max="30" value="7" /></label>
+              <button id="create-contest" type="button">Создать персональную ссылку</button>
+            </div>
+          </div>
+          <div id="contest-details" hidden>
+            <div id="contest-meta" class="contest-meta"></div>
+            <div class="contest-actions"><button id="copy-contest-link" class="secondary-button" type="button">Копировать ссылку</button><button id="resend-contest" class="secondary-button" type="button">Отправить ещё раз</button><button id="extend-contest" class="secondary-button" type="button">Продлить на 60 минут</button><button id="revoke-contest" class="danger-button" type="button">Отозвать</button></div>
+            <div id="contest-answers" class="contest-answers"></div>
+            <div class="review"><h4>Оценка команды</h4><div id="review-tasks"></div><label for="review-conclusion">Общий вывод</label><textarea id="review-conclusion" maxlength="6000"></textarea><button id="save-review" type="button">Сохранить оценку</button></div>
+          </div>
+          <p id="contest-status" class="error" role="status"></p>
+        </section>
+        <div class="dialog-actions">
+          <label for="candidate-status">Статус</label>
+          <select id="candidate-status">
+            <option value="new">Новая</option>
+            <option value="reviewing">Рассматриваем</option>
+            <option value="contacted">Связались</option>
+            <option value="accepted">Принята</option>
+            <option value="rejected">Отказ</option>
+          </select>
+          <button id="save-status" type="button">Сохранить статус</button>
+          <button id="download-resume" class="secondary-button" type="button">Скачать резюме</button>
+          <button id="delete-application" class="danger-button" type="button">Удалить заявку</button>
+        </div>
+        <p id="dialog-status" class="error" role="status"></p>
+      </dialog>
+    </main>
+  </body>
+</html>
