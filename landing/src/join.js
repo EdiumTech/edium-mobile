@@ -113,7 +113,8 @@ function validate() {
   else if (lastName.length > 80) errors.lastName = 'Фамилия должна быть короче 80 символов.'
   if (!normalizeTelegram(fields.telegram.value)) errors.telegram = 'Укажи корректный @username или ссылку t.me.'
   if (!normalizePhone(fields.phone.value)) errors.phone = 'Начни с + и укажи код страны и номер.'
-  if (email && !fields.email.validity.valid) errors.email = 'Проверь адрес электронной почты.'
+  if (!email) errors.email = 'Укажи адрес электронной почты.'
+  else if (!fields.email.validity.valid) errors.email = 'Проверь адрес электронной почты.'
   if (!normalizedDirection()) errors.direction = 'Выбери направление.'
   if (motivationText.length < 40) errors.motivation = 'Расскажи чуть подробнее — минимум 40 символов.'
   if (motivationText.length > 4000) errors.motivation = 'Сократи письмо до 4000 символов.'
@@ -273,7 +274,7 @@ async function submitApplication(uploadId) {
     lastName: fields.lastName.value.trim(),
     telegram: normalizeTelegram(fields.telegram.value),
     phone: normalizePhone(fields.phone.value),
-    email: fields.email.value.trim() || null,
+    email: fields.email.value.trim(),
     direction: normalizedDirection() || null,
     motivation: motivation.value.trim(),
     portfolioUrl: fields.portfolioUrl.value.trim() || null,

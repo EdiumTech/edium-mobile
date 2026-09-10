@@ -99,9 +99,9 @@
             </div>
 
             <div class="field">
-              <label for="email">Email <span class="optional">необязательно</span></label>
-              <input id="email" name="email" type="email" autocomplete="email" inputmode="email" placeholder="name@example.com" />
-              <p class="field-hint">Если укажешь, пришлём подтверждение получения заявки.</p>
+              <label for="email">Email <span aria-hidden="true">*</span></label>
+              <input id="email" name="email" type="email" autocomplete="email" inputmode="email" placeholder="name@example.com" required aria-describedby="email-help" />
+              <p class="field-hint" id="email-help">Сюда пришлём подтверждение получения заявки.</p>
               <p class="field-error" id="email-error"></p>
             </div>
           </fieldset>
