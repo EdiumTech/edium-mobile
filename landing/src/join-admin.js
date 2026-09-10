@@ -1,4 +1,5 @@
 import './join-admin.css'
+import { phoneHref, telegramHref } from './join-admin-utils.mjs'
 
 const configuredApiBase = (import.meta.env.VITE_JOIN_API_BASE || '').replace(/\/$/, '')
 const apiBase = configuredApiBase || (location.hostname === 'localhost' || location.hostname === '127.0.0.1' ? 'http://127.0.0.1:8787' : '')
@@ -189,7 +190,14 @@ function renderContest(value) {
 }
 
 async function openApplication(id) {
-  dialogStatus.textContent = ''
+  currentApplication = null
+  candidateName.textContent = 'Загружаем заявку…'
+  candidateDetails.replaceChildren()
+  contestEmpty.hidden = true
+  contestDetails.hidden = true
+  dialogStatus.textContent = 'Загружаем данные…'
+  dialog.setAttribute('aria-busy', 'true')
+  if (!dialog.open) dialog.showModal()
   try {
     const result = await api(`/v1/admin/applications/${encodeURIComponent(id)}`)
     currentApplication = result.application
@@ -201,17 +209,20 @@ async function openApplication(id) {
     candidateDetails.replaceChildren(
       detail('Дата заявки', formatDate(item.createdAt)),
       detail('Направление', item.direction),
-      detail('Telegram', item.telegram, { href: `https://t.me/${item.telegram.replace('@', '')}` }),
-      detail('Телефон', item.phone, { href: `tel:${item.phone}` }),
+      detail('Telegram', item.telegram, { href: telegramHref(item.telegram) }),
+      detail('Телефон', item.phone, { href: phoneHref(item.phone) }),
       detail('Email', item.email, item.email ? { href: `mailto:${item.email}` } : {}),
       detail('Ссылка', item.portfolioUrl, item.portfolioUrl ? { href: item.portfolioUrl } : {}),
       detail('Мотивационное письмо', item.motivation, { wide: true }),
       detail('Резюме', `${item.resumeName} · ${formatBytes(item.resumeSize)}`, { wide: true }),
     )
     renderContest(item.contest)
-    dialog.showModal()
+    dialogStatus.textContent = ''
   } catch (error) {
-    listStatus.textContent = error.message
+    candidateName.textContent = 'Не удалось открыть заявку'
+    dialogStatus.textContent = error.message
+  } finally {
+    dialog.removeAttribute('aria-busy')
   }
 }
 
